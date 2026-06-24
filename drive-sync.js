@@ -114,6 +114,15 @@ function driveGetToken(interactive) {
   return new Promise(async (resolve, reject) => {
     try {
       await _ensureGis();
+      // Relire le token depuis cookie/localStorage si la variable mémoire est vide
+      if (!_accessToken || Date.now() >= _tokenExpiry - 30000) {
+        const savedToken = _readCookie('mf_drive_token');
+        const savedExpiry = parseInt(_readCookie('mf_drive_token_exp') || '0');
+        if (savedToken && Date.now() < savedExpiry - 30000) {
+          _accessToken = savedToken;
+          _tokenExpiry = savedExpiry;
+        }
+      }
       if (_accessToken && Date.now() < _tokenExpiry - 30000) { resolve(_accessToken); return; }
       if (!_gisTokenClient) {
         _gisTokenClient = google.accounts.oauth2.initTokenClient({
@@ -126,6 +135,9 @@ function driveGetToken(interactive) {
         if (resp.error) { reject(resp); return; }
         _accessToken = resp.access_token;
         _tokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
+        // Persister le token pour éviter la popup au prochain démarrage
+        _writeCookie('mf_drive_token', _accessToken);
+        _writeCookie('mf_drive_token_exp', String(_tokenExpiry));
         resolve(_accessToken);
       };
       // Sur Safari iOS, forcer prompt='' pour éviter le blocage popup
