@@ -165,6 +165,42 @@ async function driveOpenPicker() {
   });
 }
 
+// Recherche automatique du fichier par nom si fileId perdu (iOS PWA storage reset)
+async function driveFindFileByName(name) {
+  try {
+    const token = await driveGetToken(false);
+    const q = encodeURIComponent(`name='${name}' and trashed=false`);
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=5`, {
+      headers: { Authorization: 'Bearer ' + token },
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j.files && j.files.length > 0) {
+      const f = j.files[0];
+      _fileId = f.id;
+      _fileName = f.name;
+      _writeFileId(_fileId);
+      _writeFileName(_fileName);
+      console.log('Drive: fichier retrouvé automatiquement', f.name, f.id);
+      return f.id;
+    }
+  } catch(e) { console.warn('driveFindFileByName error', e); }
+  return null;
+}
+
+// Charge les données : si fileId perdu, tente de le retrouver par nom avant d'échouer
+async function driveLoadAuto() {
+  if (!_fileId) _fileId = _readFileId();
+  if (!_fileId) {
+    // Tenter de retrouver le fichier par son dernier nom connu
+    const lastName = _readFileName();
+    if (lastName) await driveFindFileByName(lastName);
+  }
+  if (!_fileId) return null;
+  return driveLoad();
+}
+
 // Lit le contenu JSON du fichier Drive sélectionné
 async function driveLoad(_attempt) {
   if (!_fileId) return null;

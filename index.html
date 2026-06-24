@@ -962,9 +962,9 @@ let _lostAt      = null;    // timestamp de la perte de sync
 
 // Charge les données depuis Drive (priorité sur localStorage si plus récent)
 async function loadFromServer() {
-  if (!driveHasFile()) return false;
   try {
-    const data = await driveLoad();
+    // driveLoadAuto retrouve le fichier par nom si le fileId a été effacé (iOS PWA)
+    const data = await driveLoadAuto();
     if (data && data.accounts) {
       const lsRaw = localStorage.getItem('mf4');
       let lsData = null;
@@ -976,7 +976,7 @@ async function loadFromServer() {
         if (!S.recMemory) S.recMemory = {};
         if (!S.lastRec) S.lastRec = {};
         if (!S.echeances) S.echeances = [];
-        localStorage.setItem('mf4', JSON.stringify(S));
+        try { localStorage.setItem('mf4', JSON.stringify(S)); } catch(e) {}
       }
       return true;
     }
@@ -3779,10 +3779,9 @@ loadData();  // charge localStorage d'abord (synchrone, immédiat)
 
 (async () => {
   // Charge depuis Google Drive si un fichier a déjà été sélectionné
-  if (driveHasFile()) {
-    await loadFromServer();
-    driveBackupNow(S).catch(()=>{}); // backup glissant de l'état initial, en arrière-plan
-  }
+  // Tente de charger depuis Drive (retrouve le fichier automatiquement si fileId perdu sur iOS)
+  const driveLoaded = await loadFromServer();
+  if (driveLoaded) driveBackupNow(S).catch(()=>{});
 
   lvBindClick();
   renderSidebar();
