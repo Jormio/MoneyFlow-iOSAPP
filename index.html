@@ -339,10 +339,10 @@ body.view-livres .topbar{display:none}
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   cursor: pointer;
   color: var(--txt3);
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 500;
   letter-spacing: .3px;
   transition: color .15s;
@@ -403,6 +403,7 @@ body.view-livres .topbar{display:none}
   <div class="ni" onclick="showV('livres')" data-v="livres" tabindex="0"><i class="ti ti-book"></i>Livres de compte</div>
   <div class="ni" onclick="showV('echeances')" data-v="echeances" tabindex="0"><i class="ti ti-calendar-event"></i>Échéances</div>
   <div class="ni" onclick="showV('rapprochement')" data-v="rapprochement" tabindex="0"><i class="ti ti-arrows-exchange"></i>Équilibrage</div>
+  <div class="ni" onclick="showV('equilibrage')" data-v="equilibrage" tabindex="0"><i class="ti ti-scale"></i>Rapprochement</div>
   <div class="ni" onclick="showV('parametres')" data-v="parametres" tabindex="0"><i class="ti ti-settings"></i>Paramètres</div>
   <div class="sg">Comptes</div>
   <div class="sa" id="sb-accs"></div>
@@ -414,6 +415,7 @@ body.view-livres .topbar{display:none}
   <div class="bn-item" onclick="showV('livres')" data-v="livres"><i class="ti ti-book"></i><span>Livres</span></div>
   <div class="bn-item" onclick="showV('echeances')" data-v="echeances"><i class="ti ti-calendar-event"></i><span>Échéances</span></div>
   <div class="bn-item" onclick="showV('rapprochement')" data-v="rapprochement"><i class="ti ti-arrows-exchange"></i><span>Équilibrage</span></div>
+  <div class="bn-item" onclick="showV('equilibrage')" data-v="equilibrage"><i class="ti ti-scale"></i><span>Rapproch.</span></div>
   <div class="bn-item" onclick="showV('parametres')" data-v="parametres"><i class="ti ti-settings"></i><span>Param.</span></div>
 </nav>
 
@@ -506,6 +508,35 @@ body.view-livres .topbar{display:none}
         </div>
       </div>
     </div>
+
+    <!-- ÉQUILIBRAGE -->
+    <div id="v-equilibrage" class="vw pp">
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:14px">
+        <div class="card">
+          <div class="ch"><span class="ct2">Paramètres du rapprochement</span></div>
+          <div class="cb" style="display:flex;flex-direction:column;gap:10px">
+            <div class="fg"><label class="fl">Compte</label><select class="fc" id="eq-acc" onchange="onEqAccChange()"><option value="">Sélectionner…</option></select></div>
+            <div style="background:var(--bg3);border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px">Dernier rapprochement</div>
+              <div class="fr">
+                <div class="fg"><label class="fl">Date</label><input type="date" class="fc" id="eq-last-date" placeholder="jj/mm/aaaa"></div>
+                <div class="fg"><label class="fl">Solde (€)</label><input type="number" step="0.01" class="fc" id="eq-last-sol" placeholder="0.00"></div>
+              </div>
+            </div>
+            <div style="background:rgba(79,142,247,.08);border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:10px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.5px">Relevé à rapprocher</div>
+              <div class="fr">
+                <div class="fg"><label class="fl">Date relevé</label><input type="date" class="fc" id="eq-date" oninput="renderEq()"></div>
+                <div class="fg"><label class="fl">Solde relevé (€)</label><input type="number" step="0.01" class="fc" id="eq-sol" placeholder="1234.56" oninput="renderEq()"></div>
+              </div>
+            </div>
+            <button class="btn bpr" style="width:100%;margin-top:4px" onclick="openEqModal()"><i class="ti ti-scale"></i>Lancer le rapprochement</button>
+          </div>
+        </div>
+        <div id="eq-res"><div class="es"><i class="ti ti-scale"></i><p>Remplissez les paramètres et lancez le rapprochement</p></div></div>
+      </div>
+    </div>
+
 
     <!-- PARAMÈTRES -->
     <div id="v-parametres" class="vw">
@@ -804,7 +835,18 @@ body.view-livres .topbar{display:none}
     <div class="mt"><i class="ti ti-calendar-plus"></i>Intégrer les échéances dans le livre</div>
     <div class="fr">
       <div class="fg"><label class="fl">Compte</label><select class="fc" id="gen-acc" onchange="renderGenEchList()"></select></div>
-      <div class="fg"><label class="fl">Mois cible</label><input type="month" class="fc" id="gen-month" onchange="renderGenEchList()"></div>
+      <div class="fg"><label class="fl">Mois cible</label>
+        <div style="display:flex;gap:6px">
+          <select class="fc" id="gen-month-m" onchange="genMonthChanged()" style="flex:1">
+            <option value="01">Janvier</option><option value="02">Février</option><option value="03">Mars</option>
+            <option value="04">Avril</option><option value="05">Mai</option><option value="06">Juin</option>
+            <option value="07">Juillet</option><option value="08">Août</option><option value="09">Septembre</option>
+            <option value="10">Octobre</option><option value="11">Novembre</option><option value="12">Décembre</option>
+          </select>
+          <select class="fc" id="gen-month-y" onchange="genMonthChanged()" style="width:90px"></select>
+        </div>
+        <input type="hidden" id="gen-month">
+      </div>
     </div>
     <div class="fg"><label class="fl">Sélectionner les échéances à intégrer</label>
       <div id="gen-ech-list" style="max-height:calc(92vh - 220px);overflow-y:auto;border:1px solid var(--brd);border-radius:7px"></div>
@@ -1358,7 +1400,7 @@ function showV(name){
   document.querySelectorAll('.ni,.bn-item').forEach(n=>n.classList.remove('act'));
   document.getElementById('v-'+name)?.classList.add('act');
   document.querySelectorAll('[data-v="'+name+'"]').forEach(n=>n.classList.add('act'));
-  const T={livres:'Livres de compte',echeances:'\u00c9ch\u00e9ances r\u00e9currentes',rapprochement:'Équilibrage',parametres:'Param\u00e8tres'};
+  const T={livres:'Livres de compte',echeances:'\u00c9ch\u00e9ances r\u00e9currentes',rapprochement:'Équilibrage',equilibrage:'Rapprochement',parametres:'Param\u00e8tres'};
   document.getElementById('page-title').textContent=T[name]||name;
   // Persist page
   localStorage.setItem('mf4_lastPage',name);
@@ -1370,7 +1412,7 @@ function showV(name){
   if(name==='echeances')extra=`<button class="btn bpr bsm" onclick="openEchMo()"><i class="ti ti-plus"></i>Nouvelle \u00e9ch\u00e9ance</button>`;
   // livres: no extra buttons here \u2014 all in the single livres bar
   tba.innerHTML=extra+`<button class="btn bgh bsm has-tip" onclick="saveData()" title="Sauvegarder les donnees"><i class="ti ti-device-floppy"></i></button><button class="btn bgh bsm has-tip" onclick="backupData()" title="Telecharger une sauvegarde JSON"><i class="ti ti-archive"></i></button>`;
-  ({livres:renderLv,echeances:renderEch,parametres:renderParams}[name]||(() => {}))();
+  ({livres:renderLv,echeances:renderEch,equilibrage:renderEq,parametres:renderParams}[name]||(() => {}))();
 }
 
 
@@ -1392,7 +1434,7 @@ function renderSidebar(){
   document.getElementById('tot-pat').textContent=fmt(S.accounts.reduce((s,a)=>s+getBal(a.id),0));
   refreshAllSel();}
 function refreshAllSel(){
-  ['lv-acc','rec-acc','gen-acc','exp-acc'].forEach(id=>{
+  ['lv-acc','rec-acc','eq-acc','gen-acc','exp-acc'].forEach(id=>{
     const el=document.getElementById(id);if(!el)return;const v=el.value;
     const ph=id==='lv-acc'?'\u2014 S\u00e9lectionner \u2014':id==='exp-acc'?'Tous les comptes':'\u2014 S\u00e9lectionner \u2014';
     const emptyOpt=id==='exp-acc'?`<option value="">Tous les comptes</option>`:`<option value="">\u2014 S\u00e9lectionner \u2014</option>`;
@@ -2293,13 +2335,43 @@ function onEchFreqChange(){
   _updateEchOccHint();
 }
 
+function _initGenMonthYears(){
+  const sel=document.getElementById('gen-month-y');
+  if(!sel)return;
+  const cur=new Date().getFullYear();
+  sel.innerHTML='';
+  for(let y=cur-2;y<=cur+5;y++){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y;
+    sel.appendChild(o);
+  }
+}
+function genMonthChanged(){
+  const m=document.getElementById('gen-month-m')?.value||'01';
+  const y=document.getElementById('gen-month-y')?.value||new Date().getFullYear();
+  const hidden=document.getElementById('gen-month');
+  if(hidden)hidden.value=y+'-'+m;
+  renderGenEchList();
+}
+function _setGenMonth(monthStr){
+  // monthStr = 'YYYY-MM'
+  if(!monthStr)return;
+  const[y,m]=monthStr.split('-');
+  const selM=document.getElementById('gen-month-m');
+  const selY=document.getElementById('gen-month-y');
+  if(selM)selM.value=m;
+  if(selY)selY.value=y;
+  const hidden=document.getElementById('gen-month');
+  if(hidden)hidden.value=monthStr;
+}
 function openGenEchMo(){
   const accId=document.getElementById('lv-acc')?.value;
   // Use memorised month if set, else lv-from, else current month
   const month=_genCtx.month||document.getElementById('lv-from')?.value||new Date().toISOString().slice(0,7);
   const ga=document.getElementById('gen-acc');refreshAllSel();
   if(accId)ga.value=accId;
-  document.getElementById('gen-month').value=month;
+  _initGenMonthYears();
+  _setGenMonth(month);
   _genCtx={accId:ga.value,month};
   renderGenEchList();openMo('mo-gen-ech');
 }
@@ -3227,6 +3299,163 @@ function impNewTx(){
   saveData();renderSidebar();showRecRes();toast(nw.length+' import\u00e9es','success');
 }
 
+function onEqAccChange(){
+  const accId=document.getElementById('eq-acc').value;
+  if(!accId){renderEq();return;}
+  // 1. localStorage (le plus fiable, indépendant du fichier JSON)
+  let last=null;
+  try{const ls=localStorage.getItem('mf_lastRec_'+accId);if(ls)last=JSON.parse(ls);}catch(e){}
+  // 2. S.lastRec (chargé depuis fichier JSON)
+  if(!last)last=(S.lastRec||{})[accId]||null;
+  // 3. Fallback : déduire depuis les transactions reconciled (rapprochées)
+  if(!last){
+    const recTxs=S.transactions
+      .filter(t=>t.accountId===accId&&t.reconciled)
+      .sort((a,b)=>b.date.localeCompare(a.date));
+    if(recTxs.length){
+      const lastDate=recTxs[0].date;
+      // Calculer le solde du compte à cette date
+      let sol=getAcc(accId)?.soldeInitial||0;
+      S.transactions.filter(t=>t.accountId===accId&&t.date<=lastDate)
+        .forEach(t=>{sol+=t.type==='credit'?t.amount:-t.amount;});
+      last={date:lastDate,sol:Math.round(sol*100)/100};
+    }
+  }
+  if(last){
+    document.getElementById('eq-last-date').value=last.date||'';
+    document.getElementById('eq-last-sol').value=last.sol!=null?Number(last.sol).toFixed(2):'';
+  } else {
+    document.getElementById('eq-last-date').value='';
+    document.getElementById('eq-last-sol').value='';
+  }
+  renderEq();
+}
+
+function renderEq(){
+  const accId=document.getElementById('eq-acc').value;
+  const solBStr=document.getElementById('eq-sol').value;
+  const eqDate=document.getElementById('eq-date').value;
+  const r=document.getElementById('eq-res');
+  if(!accId){r.innerHTML='<div class="es"><i class="ti ti-scale"></i><p>Sélectionnez un compte</p></div>';return;}
+  if(!eqDate||!solBStr){r.innerHTML='<div class="es"><i class="ti ti-scale"></i><p>Remplissez les paramètres et lancez le rapprochement</p></div>';return;}
+  const lastDate=document.getElementById('eq-last-date').value||'';
+  const lastSol=parseFloat(document.getElementById('eq-last-sol').value)||0;
+  const solB=parseFloat(solBStr);
+  const ac=getAcc(accId);
+  // Solde calculé = lastSol + toutes les opérations entre lastDate et eqDate
+  const solCalcPeriode=S.transactions
+    .filter(t=>t.accountId===accId&&t.date>lastDate&&t.date<=eqDate)
+    .reduce((s,t)=>s+(t.type==='credit'?t.amount:-t.amount),lastSol);
+  const ecart=solB-solCalcPeriode;
+  r.innerHTML=`<div class="card"><div class="ch"><span class="ct2">Aperçu du rapprochement — ${fmtD(eqDate)}</span></div><div class="cb">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:13px">
+      <div class="sc"><div class="sl">Solde calculé au ${fmtD(eqDate)}</div><div class="sv" style="color:${solCalcPeriode>=0?'var(--gn)':'var(--rd)'};">${fmt(solCalcPeriode)}</div></div>
+      <div class="sc"><div class="sl">Solde du relevé</div><div class="sv" style="color:var(--ac)">${fmt(solB)}</div></div>
+      <div class="sc" style="border-color:${Math.abs(ecart)<0.01?'rgba(52,211,153,.3)':'rgba(251,191,36,.3)'}">
+        <div class="sl">Écart</div>
+        <div class="sv" style="color:${Math.abs(ecart)<0.01?'var(--gn)':'var(--am)'}">
+          ${Math.abs(ecart)<0.01?'✓ Équilibré':fmt(Math.abs(ecart))}
+        </div>
+      </div>
+    </div>
+    <button class="btn bpr" onclick="openEqModal()"><i class="ti ti-scale"></i>Lancer le rapprochement</button>
+  </div></div>`;
+}
+
+function markRec(id){const t=S.transactions.find(x=>x.id===id);if(t){t.cleared=true;t.reconciled=false;saveData();renderEq();}}
+
+// ── Modale de rapprochement ───────────────────────────────────────────
+function openEqModal(){
+  const accId=document.getElementById('eq-acc').value;
+  const eqDate=document.getElementById('eq-date').value;
+  const solBStr=document.getElementById('eq-sol').value;
+  const lastDate=document.getElementById('eq-last-date').value||'';
+  const lastSol=parseFloat(document.getElementById('eq-last-sol').value)||0;
+  if(!accId||!eqDate||!solBStr){toast('Remplissez tous les champs obligatoires','error');return;}
+  const solB=parseFloat(solBStr);
+  // Transactions entre lastDate+1 et eqDate
+  const txs=S.transactions.filter(t=>{
+    if(t.accountId!==accId)return false;
+    if(t.reconciled)return false;          // déjà rapprochées (R) : exclure
+    if(lastDate&&t.date<lastDate)return false; // strictement avant le dernier rapprochement
+    if(t.date>eqDate)return false;         // après la date du relevé : exclure
+    return true;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+
+  // Pré-cocher : équilibrées (cleared) → oui ; non-équilibrées → oui aussi (par défaut tout coché)
+  window._eqCtx={accId,eqDate,solB,lastSol,txs};
+  renderEqModal();
+  openMo('mo-eq');
+}
+
+function renderEqModal(){
+  const{solB,lastSol,txs}=window._eqCtx;
+  const tbody=document.getElementById('eq-modal-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=txs.map((t,i)=>`
+    <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+      <td style="padding:4px 8px"><input type="checkbox" class="eq-cb" data-idx="${i}" ${t.cleared?'checked':''} onchange="updateEqSum()"></td>
+      <td style="padding:4px 8px;font-size:11px;white-space:nowrap">${fmtD(t.date)}</td>
+      <td style="padding:4px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.label}</td>
+      <td style="padding:4px 8px;text-align:right;color:${t.type==='credit'?'var(--gn)':'var(--rd)'};white-space:nowrap">
+        ${t.type==='credit'?'+':'-'}${fmt(t.amount)}</td>
+      <td style="padding:4px 8px;font-size:10px;color:${t.cleared?'var(--gn)':'var(--txt3)'};text-align:center">
+        ${t.cleared?'✓ Équil.':'—'}</td>
+    </tr>`).join('');
+  updateEqSum();
+}
+
+function updateEqSum(){
+  const{solB,lastSol,txs}=window._eqCtx;
+  const checked=[...document.querySelectorAll('.eq-cb:checked')].map(c=>+c.dataset.idx);
+  let sum=lastSol;
+  checked.forEach(i=>{
+    const t=txs[i];
+    sum+=t.type==='credit'?t.amount:-t.amount;
+  });
+  const diff=sum-solB;
+  const ok=Math.abs(diff)<0.01;
+  const el=document.getElementById('eq-modal-sum');
+  if(el)el.innerHTML=`
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--txt3)">Solde précédent : <b style="color:var(--txt)">${fmt(lastSol)}</b></span>
+      <span style="font-size:11px;color:var(--txt3)">+ opérations cochées : <b style="color:var(--txt)">${fmt(sum-lastSol)}</b></span>
+      <span style="font-size:14px;font-weight:700;color:${ok?'var(--gn)':'var(--am)'}">= ${fmt(sum)}</span>
+      <span style="font-size:11px;color:var(--txt3)">vs relevé : <b style="color:var(--ac)">${fmt(solB)}</b></span>
+      <span style="font-size:13px;font-weight:700;color:${ok?'var(--gn)':'var(--am)'}">
+        ${ok?'✓ Rapprochement équilibré':'→ écart de '+fmt(diff)}</span>
+    </div>`;
+  const okBtn=document.getElementById('eq-modal-ok');
+  if(okBtn){okBtn.disabled=!ok;okBtn.style.opacity=ok?'1':'0.5';}
+}
+
+function validateEq(){
+  const{accId,eqDate,txs}=window._eqCtx;
+  const checked=new Set([...document.querySelectorAll('.eq-cb:checked')].map(c=>+c.dataset.idx));
+  let markedCount=0;
+  txs.forEach((t,i)=>{
+    if(checked.has(i)){
+      t.reconciled=true;   // rapproché = R bleu
+      t.cleared=false;     // PAS juste équilibré
+      markedCount++;
+    }
+  });
+  console.log('[validateEq] '+markedCount+' opérations marquées rapprochées (reconciled=true)');
+  // Mettre à jour les champs du dernier rapprochement
+  const solB=window._eqCtx.solB;
+  // Persister le dernier rapprochement par compte
+  if(!S.lastRec)S.lastRec={};
+  S.lastRec[accId]={date:eqDate,sol:solB};
+  // Double stockage dans localStorage pour robustesse
+  localStorage.setItem('mf_lastRec_'+accId, JSON.stringify({date:eqDate,sol:solB}));
+  document.getElementById('eq-last-date').value=eqDate;
+  document.getElementById('eq-last-sol').value=solB.toFixed(2);
+  document.getElementById('eq-date').value='';
+  document.getElementById('eq-sol').value='';
+  saveData();renderSidebar();renderEq();
+  closeMo('mo-eq');
+  toast('Rapprochement validé — opérations marquées R','success');
+}
 function openCatMo(type,parentId){
   document.getElementById('mo-cat-title').textContent=parentId?'Nouvelle sous-cat\u00e9gorie':'Nouvelle cat\u00e9gorie';
   document.getElementById('cat-id').value='';document.getElementById('cat-name').value='';document.getElementById('cat-icon').value='';
@@ -3698,7 +3927,7 @@ function lvFocusedId(){
 }
 
 // Navigation entre onglets de la sidebar
-const NAV_ORDER = ['livres','echeances','rapprochement','parametres'];
+const NAV_ORDER = ['livres','echeances','rapprochement','equilibrage','parametres'];
 function currentNavIdx(){
   const act = document.querySelector('.ni.act');
   const v = act?.dataset.v;
@@ -3846,7 +4075,7 @@ loadData();  // charge localStorage d'abord (synchrone, immédiat)
     if (accId) document.getElementById('lv-acc').value = accId;
     showV('livres');
   } else {
-    showV(['rapprochement','parametres','echeances','livres'].includes(lastPage) ? lastPage : 'livres');
+    showV(['rapprochement','parametres','echeances','equilibrage','livres'].includes(lastPage) ? lastPage : 'livres');
   }
 
   document.getElementById('lv-from').value = '';
@@ -3909,6 +4138,37 @@ loadData();  // charge localStorage d'abord (synchrone, immédiat)
     <div class="mf">
       <button class="btn bse" onclick="closeMo('mo-dup-inspector')">Annuler</button>
       <button class="btn bpr" onclick="importSelectedDups()"><i class="ti ti-download"></i>Importer la sélection</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL RAPPROCHEMENT (v-equilibrage) -->
+<div class="mo" id="mo-eq">
+  <div class="md" style="max-width:780px;width:96vw;max-height:92vh">
+    <div class="mt"><i class="ti ti-scale"></i>Rapprochement — vérification des opérations</div>
+    <p style="font-size:11px;color:var(--txt2);margin-bottom:10px">
+      Les opérations équilibrées (✓) sont pré-cochées. Cochez toutes les opérations présentes sur votre relevé.
+      Le rapprochement sera validé quand la somme correspond au solde du relevé.
+    </p>
+    <div id="eq-modal-sum" style="padding:8px 12px;background:var(--bg3);border-radius:7px;margin-bottom:10px;font-size:12px"></div>
+    <div style="max-height:calc(92vh - 280px);overflow-y:auto;border:1px solid var(--brd);border-radius:7px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead style="position:sticky;top:0;background:var(--bg2);z-index:1">
+          <tr style="border-bottom:1px solid var(--brd)">
+            <th style="padding:6px 8px;width:28px"><input type="checkbox" id="eq-all-cb" onchange="document.querySelectorAll('.eq-cb').forEach(c=>c.checked=this.checked);updateEqSum()"></th>
+            <th style="padding:6px 8px;text-align:left;color:var(--txt3);font-size:10px;font-weight:500">Date</th>
+            <th style="padding:6px 8px;text-align:left;color:var(--txt3);font-size:10px;font-weight:500">Libellé</th>
+            <th style="padding:6px 8px;text-align:right;color:var(--txt3);font-size:10px;font-weight:500">Montant</th>
+            <th style="padding:6px 8px;text-align:center;color:var(--txt3);font-size:10px;font-weight:500">État</th>
+          </tr>
+        </thead>
+        <tbody id="eq-modal-tbody"></tbody>
+      </table>
+    </div>
+    <div class="mf">
+      <button class="btn bse" onclick="closeMo('mo-eq')">Annuler</button>
+      <button class="btn bpr" id="eq-modal-ok" onclick="validateEq()"><i class="ti ti-check"></i>Valider l'équilibrage</button>
     </div>
   </div>
 </div>
