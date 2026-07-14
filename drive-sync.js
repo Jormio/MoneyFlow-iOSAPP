@@ -217,14 +217,22 @@ async function driveLoadAuto() {
 async function driveLoad(_attempt) {
   if (!_fileId) return null;
   const attempt = _attempt || 1;
-  const token = await driveGetToken(false);
   try {
+    // Forcer renouvellement du token si c'est un retry après 401
+    const token = await driveGetToken(false);
     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${_fileId}?alt=media`, {
       headers: { Authorization: 'Bearer ' + token },
       signal: AbortSignal.timeout(60000)
     });
     if (!r.ok) {
       if (r.status === 404) driveForget();
+      if (r.status === 401 && attempt < 3) {
+        // Token expiré : invalider le token mémorisé et réessayer
+        _accessToken = null; _tokenExpiry = 0;
+        _clearCookie('mf_drive_token'); _clearCookie('mf_drive_token_exp');
+        await new Promise(res => setTimeout(res, 1000));
+        return driveLoad(attempt + 1);
+      }
       if ((r.status === 429 || r.status >= 500) && attempt < 4) {
         await new Promise(res => setTimeout(res, attempt * 3000));
         return driveLoad(attempt + 1);
@@ -263,6 +271,13 @@ async function driveSave(obj, _attempt) {
       window._driveLastError = `HTTP ${r.status} ${detail}`;
       console.warn('driveSave HTTP error', r.status, detail);
       if (r.status === 404) { driveForget(); return false; }
+      if (r.status === 401 && attempt < 3) {
+        // Token expiré : invalider et réessayer
+        _accessToken = null; _tokenExpiry = 0;
+        _clearCookie('mf_drive_token'); _clearCookie('mf_drive_token_exp');
+        await new Promise(res => setTimeout(res, 1000));
+        return driveSave(obj, attempt + 1);
+      }
       // Erreurs serveur transitoires (429 rate limit, 5xx) : retry avec backoff
       if ((r.status === 429 || r.status >= 500) && attempt < 4) {
         await new Promise(res => setTimeout(res, attempt * 3000));
